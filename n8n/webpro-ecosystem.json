@@ -1,0 +1,224 @@
+{
+  "name": "WebPro Ecosystem Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webpro-leads",
+        "responseMode": "lastNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webpro-webhook",
+      "name": "Entrada WebPro",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "webhookId": "webpro-leads"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst request = $json;\nconst body = request.body ?? request;\nconst headers = request.headers ?? {};\nconst secret = $env.WEBPRO_WEBHOOK_SECRET || '';\nconst receivedSignature = headers['x-webpro-signature'] || headers['X-WebPro-Signature'] || '';\n\nif (secret) {\n  const rawBody = typeof body === 'string' ? body : JSON.stringify(body);\n  const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\n  if (receivedSignature !== expectedSignature) {\n    throw new Error('Firma WebPro invalida');\n  }\n}\n\nconst lead = body.lead || body;\nconst event = body.event || 'lead.created';\nconst checklist = Array.isArray(lead.checklist) ? lead.checklist : [];\nconst phoneItem = checklist.find(item => /whatsapp/i.test(item.question || ''));\nconst calendarItem = checklist.find(item => /calendar/i.test(item.question || ''));\nconst paymentItem = checklist.find(item => /pago/i.test(item.question || ''));\n\nreturn [{\n  json: {\n    event,\n    source: body.source || 'webpro-crm',\n    occurredAt: body.occurredAt || new Date().toISOString(),\n    lead,\n    integrations: {\n      crm: {\n        email: lead.email,\n        plan: lead.plan,\n        total: lead.total,\n        status: lead.status || 'nuevo',\n        sourceId: lead.id\n      },\n      email: {\n        to: lead.email,\n        adminEmail: $env.ADMIN_EMAIL || '',\n        subject: `WebPro - ${lead.plan || 'Nueva solicitud'}`\n      },\n      whatsapp: {\n        phone: phoneItem?.answer || '',\n        message: `Hola, recibimos tu solicitud WebPro para el plan ${lead.plan || ''}.`\n      },\n      calendar: {\n        email: calendarItem?.answer || '',\n        bookingRequired: Boolean(calendarItem?.answer)\n      },\n      payment: {\n        provider: paymentItem?.answer || '',\n        amount: Number(lead.total || 0),\n        currency: 'USD',\n        reference: lead.id\n      }\n    }\n  }\n}];"
+      },
+      "id": "webpro-normalize",
+      "name": "Validar y normalizar lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "created-condition",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "lead.created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lead.created"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "status-condition",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "lead.status_updated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lead.status_updated"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "webpro-route",
+      "name": "Enrutar evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nreturn [{\n  json: {\n    event: data.event,\n    action: 'lead.created',\n    crmContact: data.integrations.crm,\n    emailNotification: data.integrations.email,\n    whatsappNotification: data.integrations.whatsapp,\n    calendarRequest: data.integrations.calendar,\n    paymentRequest: data.integrations.payment,\n    lead: data.lead,\n    nextSteps: [\n      'Crear o actualizar contacto en el CRM',\n      'Enviar confirmacion por correo',\n      'Enviar WhatsApp si existe telefono y consentimiento',\n      'Crear enlace de agenda si corresponde',\n      'Crear checkout si corresponde'\n    ]\n  }\n}];"
+      },
+      "id": "webpro-created-plan",
+      "name": "Preparar lead nuevo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, -120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nreturn [{\n  json: {\n    event: data.event,\n    action: 'lead.status_updated',\n    crmUpdate: {\n      sourceId: data.lead.id,\n      email: data.lead.email,\n      status: data.lead.status\n    },\n    lead: data.lead,\n    nextSteps: [\n      'Actualizar estado en el CRM',\n      'Enviar una notificacion segun el nuevo estado',\n      'Iniciar la siguiente automatizacion comercial'\n    ]\n  }\n}];"
+      },
+      "id": "webpro-status-plan",
+      "name": "Preparar cambio de estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, event: $json.event, leadId: $json.lead?.id || null, action: $json.action } }}",
+        "options": {}
+      },
+      "id": "webpro-response-created",
+      "name": "Confirmar evento nuevo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [980, -120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, event: $json.event, leadId: $json.lead?.id || null, action: $json.action } }}",
+        "options": {}
+      },
+      "id": "webpro-response-status",
+      "name": "Confirmar cambio de estado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [980, 120]
+    },
+    {
+      "parameters": {
+        "content": "Configura WEBPRO_WEBHOOK_SECRET en el entorno de n8n con el mismo valor de N8N_WEBHOOK_SECRET del backend.\n\nDespues de importar, agrega nodos y credenciales para CRM, correo, WhatsApp, Calendar y pagos usando los objetos integrations.crm, integrations.email, integrations.whatsapp, integrations.calendar e integrations.payment.",
+        "height": 220,
+        "width": 380
+      },
+      "id": "webpro-note",
+      "name": "Configuracion pendiente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [220, 260]
+    }
+  ],
+  "connections": {
+    "Entrada WebPro": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar lead": {
+      "main": [
+        [
+          {
+            "node": "Enrutar evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar evento": {
+      "main": [
+        [
+          {
+            "node": "Preparar lead nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar cambio de estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar lead nuevo": {
+      "main": [
+        [
+          {
+            "node": "Confirmar evento nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar cambio de estado": {
+      "main": [
+        [
+          {
+            "node": "Confirmar cambio de estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "webpro-ecosystem-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

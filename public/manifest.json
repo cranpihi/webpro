@@ -1,0 +1,10 @@
+{
+  "name": "WebPro CRM",
+  "short_name": "WebPro",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff9f5",
+  "theme_color": "#12343b",
+  "lang": "es",
+  "icons": []
+}

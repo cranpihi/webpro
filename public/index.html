@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tu web lista para vender — Propuesta IA</title>
+<link rel="manifest" href="/manifest.json"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<!-- Google Maps Places API (Reemplaza TU_API_KEY_MAPS por tu clave real para que el autocompletado funcione) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_MAPS&libraries=places"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #2A9D8F;
+    --teal-light: #E4F3F0;
+    --teal-mid: #72C8BE;
+    --teal-dark: #176B63;
+    --blue: #12343B;
+    --blue-light: #E5EFF0;
+    --amber: #A44A36;
+    --amber-light: #FCE9E3;
+    --amber-mid: #E08A72;
+    --purple: #365C63;
+    --purple-light: #E6EFF0;
+    --coral: #C84C3A;
+    --coral-light: #FBE8E3;
+    --gray-100: #F1EAE4;
+    --gray-400: #91877F;
+    --gray-600: #655D58;
+    --text: #12343B;
+    --text-muted: #6D625C;
+    --border: rgba(18,52,59,0.14);
+    --bg: #FFF9F5;
+    --white: #ffffff;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: radial-gradient(circle at 12% 0%, #fff1e9 0, transparent 32rem), var(--bg); color: var(--text); line-height: 1.6; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(255,249,245,0.92); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .nav-brand { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); text-decoration: none; }
+  .nav-brand span { color: var(--teal); }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--teal); }
+
+  /* HERO */
+  .hero-split { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; padding: 6rem 2rem 5rem; max-width: 1100px; margin: 0 auto; text-align: left; }
+  .hero-tag { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--teal-dark); background: var(--teal-light); padding: 5px 14px; border-radius: 20px; margin-bottom: 1.2rem; }
+  .hero-split h1 { font-family: 'Syne', sans-serif; font-size: clamp(32px, 4vw, 48px); font-weight: 800; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+  .hero-split h1 em { font-style: normal; color: var(--teal); }
+  .hero-split p { font-size: 16px; color: var(--text-muted); font-weight: 300; max-width: 480px; margin-bottom: 2rem; }
+  .hero-badges-left { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 2.5rem; }
+  .badge { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border); color: var(--text-muted); }
+  .btn-hero { display: inline-block; background: var(--coral); color: #fff; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 13px 32px; border-radius: var(--radius-sm); text-decoration: none; transition: background 0.2s, transform 0.1s; border: none; cursor: pointer; box-shadow: 0 8px 18px rgba(200,76,58,0.2); }
+  .btn-hero:hover { background: #A93E30; }
+  .btn-hero:active { transform: scale(0.97); }
+
+  .hero-visual { position: relative; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 48px rgba(18,52,59,0.16), 0 0 0 1px var(--border); background: var(--gray-100); aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; }
+  .hero-visual video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .browser-dots { position: absolute; top: 12px; left: 16px; display: flex; gap: 6px; z-index: 2; }
+  .browser-dots span { width: 10px; height: 10px; border-radius: 50%; background: rgba(0,0,0,0.15); }
+
+  /* SECTIONS */
+  section { padding: 4rem 2rem; max-width: 860px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(24px, 4vw, 34px); font-weight: 800; color: var(--text); margin-bottom: 2.5rem; line-height: 1.2; }
+  .divider { height: 0.5px; background: var(--border); max-width: 860px; margin: 0 auto; }
+
+  /* PROCESO INTERACTIVO */
+  .process-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 12px 32px rgba(0,0,0,0.03); }
+  .process-nav { display: flex; flex-direction: column; gap: 0.5rem; border-right: 1px solid var(--border); padding-right: 1.5rem; }
+  .p-step { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent; }
+  .p-step:hover { background: var(--gray-100); }
+  .p-step.active { background: var(--coral-light); border-color: var(--coral); }
+  .p-step .p-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; color: var(--text-muted); }
+  .p-step.active .p-num { color: var(--coral); }
+  .p-step .p-name { font-weight: 500; font-size: 15px; color: var(--text-muted); }
+  .p-step.active .p-name { color: var(--coral); font-weight: 700; }
+  .process-display { display: flex; align-items: center; padding: 1rem 1rem 1rem 2rem; }
+  .p-content { display: none; animation: fadeInRight 0.4s ease forwards; }
+  .p-content.active { display: block; }
+  .p-content h3 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 12px; margin-top: 10px; }
+  .p-content p { color: var(--text-muted); line-height: 1.7; font-size: 16px; }
+  .step-tag { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 9px; border-radius: 4px; margin-bottom: 6px; }
+  @keyframes fadeInRight { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ECOSISTEMA DIGITAL */
+  .eco-container { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 3rem 2rem; box-shadow: 0 12px 32px rgba(0,0,0,0.03); overflow-x: auto; }
+  .eco-flow { display: flex; align-items: center; justify-content: space-between; min-width: 700px; gap: 15px; }
+  .eco-col { display: flex; flex-direction: column; gap: 15px; flex: 1; }
+  .eco-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; text-align: center; position: relative; transition: transform 0.2s; }
+  .eco-box:hover { transform: translateY(-2px); border-color: var(--teal-mid); }
+  .eco-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .eco-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .eco-arrow { color: var(--teal-mid); font-size: 20px; flex-shrink: 0; }
+  .eco-col.frontend .eco-box { border-left: 4px solid var(--blue); }
+  .eco-col.orquestador .eco-box { background: var(--blue-light); border-color: var(--teal-mid); border-left: 4px solid var(--blue); }
+  .eco-col.backend .eco-box { border-left: 4px solid var(--amber-mid); }
+
+  /* COTIZACION INTERACTIVA */
+  .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
+  .plan-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; cursor: pointer; transition: all 0.2s ease; position: relative; display: block; user-select: none; }
+  .plan-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.04); }
+  .plan-card input[type="radio"] { display: none; }
+  .plan-card.selected { border-color: var(--coral); background: #fff1eb; box-shadow: 0 4px 12px rgba(200, 76, 58, 0.12); }
+  .plan-card.recommended:not(.selected) { border-color: #378ADD; }
+  .card-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;}
+  .custom-radio { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; position: relative; transition: all 0.2s; flex-shrink: 0; }
+  .plan-card.selected .custom-radio { border-color: var(--coral); }
+  .plan-card.selected .custom-radio::after { content: ''; position: absolute; width: 10px; height: 10px; background: var(--coral); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .rec-badge { display: inline-block; background: var(--blue-light); color: var(--blue); font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: var(--radius-sm); margin-bottom: 10px; }
+  .plan-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+  .plan-price { font-size: 30px; font-weight: 500; color: var(--text); margin: 8px 0 4px; font-family: 'Syne', sans-serif; }
+  .plan-price span { font-size: 13px; color: var(--text-muted); font-weight: 400; font-family: 'DM Sans', sans-serif; }
+  .plan-days { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+  .feat-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .feat-list li { font-size: 13px; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; }
+  .feat-list li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex-shrink: 0; margin-top: 5px; }
+  .feat-list li.inc::before { background: #378ADD; }
+  .feat-list li.extra::before { background: var(--amber-mid); }
+
+  /* EXTRAS */
+  .extras-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; margin-bottom: 1.5rem; }
+  .extra-item { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+  .extra-item input[type="checkbox"] { display: none; }
+  .extra-item.selected { border-color: var(--teal); background: var(--teal-light); }
+  .custom-checkbox { width: 18px; height: 18px; border: 1.5px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+  .extra-item.selected .custom-checkbox { background: var(--teal); border-color: var(--teal); }
+  .extra-item.selected .custom-checkbox svg { display: block; }
+  .custom-checkbox svg { display: none; width: 10px; height: 10px; }
+  .extra-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .extra-price { font-size: 12px; color: var(--text-muted); }
+
+  /* RESUMEN TOTAL */
+  .summary-card { background: var(--white); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; border-bottom: 0.5px solid var(--border); }
+  .summary-row:last-child { border-bottom: none; font-weight: 500; font-size: 16px; padding-top: 12px; }
+  .summary-row .lbl { color: var(--text-muted); }
+  .summary-row.total .val { color: var(--coral); font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+
+  /* CHECKLIST */
+  .checklist-wrap { max-width: 660px; }
+  .progress-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+  .progress-bar-bg { background: var(--gray-100); border-radius: 6px; height: 7px; margin-bottom: 2rem; overflow: hidden; }
+  .progress-bar-fill { height: 7px; background: var(--coral); border-radius: 6px; transition: width 0.35s ease; }
+  .cl-group { margin-bottom: 2rem; }
+  .cl-group-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); }
+  .cl-item { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-bottom: 0.5px solid var(--border); transition: opacity 0.2s; }
+  .cl-header { display: flex; align-items: flex-start; gap: 12px; }
+  .cl-checkbox { width: 20px; height: 20px; border: 1.5px solid #ccc; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; cursor: pointer; }
+  .cl-checkbox.checked { background: var(--coral); border-color: var(--coral); }
+  .cl-checkbox.checked svg { display: block; }
+  .cl-checkbox svg { display: none; width: 11px; height: 11px; }
+  .cl-text { flex: 1; }
+  .cl-main { font-size: 14px; font-weight: 500; line-height: 1.4; transition: color 0.2s; }
+  .cl-item.completed .cl-main { color: var(--blue); }
+  .cl-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .cl-field { margin-left: 32px; display: flex; flex-direction: column; gap: 8px; }
+  .cl-field input[type="text"], .cl-field input[type="email"], .cl-field input[type="tel"], .cl-field textarea, .cl-field select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; color: var(--text); }
+  .cl-field input:focus, .cl-field textarea:focus { outline: none; border-color: var(--teal-mid); }
+  .cl-field input[type="file"] { font-size: 13px; color: var(--text-muted); cursor: pointer; width: 100%; padding: 6px 0; }
+  .cl-field input[type="file"]::file-selector-button { background: var(--gray-100); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text); font-size: 12px; font-family: inherit; cursor: pointer; margin-right: 10px; transition: background 0.2s; }
+
+  /* Botones Inteligentes IA y APIs */
+  .btn-ia { align-self: flex-start; background: linear-gradient(135deg, #7C3AED, #3B82F6); color: white; border: none; padding: 6px 14px; font-size: 12px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; gap: 6px; }
+  .btn-ia:hover { opacity: 0.9; }
+
+  .btn-yt { align-self: flex-start; background: #FF0000; color: white; border: none; padding: 6px 14px; font-size: 12px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; gap: 6px; }
+  .btn-yt:hover { opacity: 0.9; }
+
+  /* Modal YouTube */
+  #yt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+  .yt-content { background: var(--bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 600px; }
+  .yt-results { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; max-height: 400px; overflow-y: auto; }
+  .yt-item { display: flex; gap: 10px; background: white; padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); }
+  .yt-item:hover { border-color: red; }
+  .yt-item img { width: 120px; border-radius: 4px; }
+  .yt-info h4 { font-size: 14px; margin-bottom: 4px; }
+
+  /* CTA FINAL */
+  .cta-section { text-align: center; padding: 4rem 2rem 5rem; max-width: 600px; margin: 0 auto; }
+  .cta-section h2 { font-family: 'Syne', sans-serif; font-size: clamp(24px, 4vw, 36px); font-weight: 800; color: var(--text); margin-bottom: 1rem; }
+  .cta-section p { font-size: 15px; color: var(--text-muted); margin-bottom: 2rem; font-weight: 300; }
+  .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-outline { display: inline-block; background: transparent; color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 13px 28px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); text-decoration: none; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+  .btn-outline:hover { background: var(--gray-100); }
+
+  /* FOOTER */
+  footer { border-top: 0.5px solid var(--border); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; max-width: 860px; margin: 0 auto; font-size: 12px; color: var(--text-muted); }
+
+  /* CHAT WIDGET (ECOSISTEMA COMPLETO) */
+  .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 999; }
+  .chat-btn { width: 60px; height: 60px; border-radius: 50%; background: var(--blue); color: white; border: none; box-shadow: 0 4px 12px rgba(18,52,59,0.22); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+  .chat-btn:hover { transform: scale(1.05); }
+  .chat-btn svg { width: 28px; height: 28px; fill: currentColor; }
+  .chat-window { position: absolute; bottom: 75px; right: 0; width: 340px; height: 450px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border); transition: opacity 0.3s; }
+  .chat-window.active { display: flex; }
+  .chat-header { background: var(--blue); color: white; padding: 15px; font-family: 'Syne', sans-serif; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .chat-close { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+  .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafaf8; }
+  .chat-msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 14px; line-height: 1.4; }
+  .chat-msg.user { background: var(--coral-light); color: var(--amber); align-self: flex-end; border-bottom-right-radius: 2px; }
+  .chat-msg.bot { background: white; color: var(--text); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border); }
+  .chat-footer { padding: 12px; background: white; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .chat-footer input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 14px; outline: none; }
+  .chat-footer input:focus { border-color: var(--teal); }
+  .chat-footer button { background: var(--teal); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .chat-footer button svg { width: 18px; height: 18px; fill: currentColor; }
+  .typing-indicator { font-size: 12px; color: var(--text-muted); align-self: flex-start; font-style: italic; display: none; }
+
+  /* SCROLL ANIMATION */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 850px) {
+    .hero-split { grid-template-columns: 1fr; text-align: center; padding: 4rem 1.5rem 3rem; gap: 2.5rem; }
+    .hero-split p { margin: 0 auto 2rem; }
+    .hero-badges-left { justify-content: center; }
+    .hero-visual { order: -1; }
+  }
+  @media (max-width: 768px) {
+    .process-container { grid-template-columns: 1fr; padding: 1.5rem; }
+    .process-nav { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding-right: 0; padding-bottom: 1.5rem; }
+    .p-step { flex-shrink: 0; padding: 10px 14px; }
+    .process-display { padding: 1rem 0 0 0; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1rem; } .nav-links { display: none; } section { padding: 3rem 1rem; }
+    .chat-window { width: calc(100vw - 40px); height: 400px; right: 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">web<span>pro</span></a>
+  <ul class="nav-links">
+    <li><a href="#proceso">Proceso</a></li>
+    <li><a href="#ecosistema">Arquitectura</a></li>
+    <li><a href="#cotizacion">Cotización</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero-split reveal">
+  <div class="hero-content">
+    <span class="hero-tag">Desarrollo + IA</span>
+    <h1>Tu web lista para<br><em>vender en 5 pasos</em></h1>
+    <p>Utilizamos el poder de Google Gemini y APIs avanzadas para crear tu ecosistema digital más rápido y mejor estructurado.</p>
+
+    <div class="hero-badges-left">
+      <span class="badge">Entrega garantizada</span>
+      <span class="badge">Mobile-first</span>
+      <span class="badge">Resultados desde el día 1</span>
+      <span class="badge">Integraciones IA listas</span>
+    </div>
+
+    <a class="btn-hero" href="#cotizacion">Configurar mi plan</a>
+  </div>
+
+  <div class="hero-visual">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <video autoplay muted loop playsinline poster="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80">
+      <source src="https://cdn.pixabay.com/video/2020/05/24/40097-425123985_large.mp4" type="video/mp4">
+    </video>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- METODOLOGIA INTERACTIVA -->
+<section id="proceso">
+  <p class="section-label">Metodología</p>
+  <h2 class="section-title reveal">Cómo trabajamos</h2>
+
+  <div class="process-container reveal">
+    <div class="process-nav">
+      <div class="p-step active" onclick="activateStep(1)" id="nav-1"><span class="p-num">01</span> <span class="p-name">Estrategia</span></div>
+      <div class="p-step" onclick="activateStep(2)" id="nav-2"><span class="p-num">02</span> <span class="p-name">Contenido</span></div>
+      <div class="p-step" onclick="activateStep(3)" id="nav-3"><span class="p-num">03</span> <span class="p-name">Diseño</span></div>
+      <div class="p-step" onclick="activateStep(4)" id="nav-4"><span class="p-num">04</span> <span class="p-name">Tecnología</span></div>
+      <div class="p-step" onclick="activateStep(5)" id="nav-5"><span class="p-num">05</span> <span class="p-name">Resultados</span></div>
+    </div>
+
+    <div class="process-display">
+      <div class="p-content active" id="content-1">
+        <span class="step-tag" style="background:var(--teal-light); color:var(--teal-dark);">Paso 01</span>
+        <h3>Sesión de descubrimiento</h3>
+        <p>Reunión estratégica para entender tu modelo de negocio, objetivos de venta y público objetivo. Definimos el norte antes de escribir una sola línea de código.</p>
+      </div>
+      <div class="p-content" id="content-2">
+        <span class="step-tag" style="background:var(--blue-light); color:var(--blue);">Paso 02</span>
+        <h3>Arquitectura y contenido</h3>
+        <p>Definimos la estructura de la página y los "gatillos" de venta — textos y llamados a la acción que guiarán al usuario hacia la compra. (Apoyado por IA)</p>
+      </div>
+      <div class="p-content" id="content-3">
+        <span class="step-tag" style="background:var(--amber-light); color:var(--amber);">Paso 03</span>
+        <h3>Diseño e identidad visual</h3>
+        <p>Creamos la interfaz alineada a tu marca — perfecta en móviles, con una estética que transmite confianza instantánea desde el primer scroll.</p>
+      </div>
+      <div class="p-content" id="content-4">
+        <span class="step-tag" style="background:var(--purple-light); color:var(--purple);">Paso 04</span>
+        <h3>Integración de herramientas</h3>
+        <p>Conectamos tu web con pasarelas de pago, CRM, WhatsApp o sistemas de agendamiento para que el negocio sea completamente funcional desde el día uno.</p>
+      </div>
+      <div class="p-content" id="content-5">
+        <span class="step-tag" style="background:var(--coral-light); color:var(--coral);">Paso 05</span>
+        <h3>Lanzamiento y optimización</h3>
+        <p>Despegue de la web, pruebas finales de rendimiento y entrega de un panel de métricas para que veas tus resultados en tiempo real.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ECOSISTEMA DIGITAL -->
+<section id="ecosistema">
+  <p class="section-label">Arquitectura Técnica</p>
+  <h2 class="section-title reveal">El ecosistema que impulsará tu negocio</h2>
+
+  <div class="eco-container reveal">
+    <div class="eco-flow">
+      <!-- CAPA 1 -->
+      <div class="eco-col frontend">
+        <div class="eco-box"><p class="eco-title">Landing Page</p><p class="eco-desc">Captura de tráfico y formulario web</p></div>
+        <div class="eco-box"><p class="eco-title">Google Calendar</p><p class="eco-desc">Agendamiento en tiempo real</p></div>
+        <div class="eco-box"><p class="eco-title">WhatsApp</p><p class="eco-desc">Consultas rápidas directas</p></div>
+      </div>
+      <div class="eco-arrow">▶</div>
+      <!-- CAPA 2 -->
+      <div class="eco-col orquestador">
+        <div class="eco-box"><p class="eco-title">Orquestador (n8n)</p><p class="eco-desc">Recibe datos, enruta solicitudes y activa automatizaciones.</p></div>
+      </div>
+      <div class="eco-arrow">▶</div>
+      <!-- CAPA 3 -->
+      <div class="eco-col backend">
+        <div class="eco-box"><p class="eco-title">Pasarela de Pagos</p><p class="eco-desc">Flow / Stripe para cobro seguro</p></div>
+        <div class="eco-box"><p class="eco-title">CRM de Ventas</p><p class="eco-desc">Registro centralizado de Leads</p></div>
+        <div class="eco-box"><p class="eco-title">Alertas Internas</p><p class="eco-desc">Notificaciones vía Email / Slack</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FORMULARIO GLOBAL: Cotización y Checklist IA -->
+<form id="propuesta-form" onsubmit="event.preventDefault();">
+
+  <!-- COTIZACION INTERACTIVA -->
+  <section id="cotizacion">
+    <p class="section-label">Inversión</p>
+    <h2 class="section-title reveal">Configura tu paquete</h2>
+
+    <div class="plan-grid reveal">
+      <label class="plan-card">
+        <input type="radio" name="plan" value="esencial" onchange="selectPlan(this)">
+        <div class="card-header-top"><p class="plan-name">Esencial</p><div class="custom-radio"></div></div>
+        <p class="plan-price">$320 <span>USD</span></p>
+        <p class="plan-days">Entrega en 10 días hábiles</p>
+        <ul class="feat-list">
+          <li>Landing page de 1 página</li>
+          <li>Formulario de contacto</li>
+          <li>Botón WhatsApp</li>
+          <li>Diseño mobile-first</li>
+        </ul>
+      </label>
+
+      <label class="plan-card recommended selected">
+        <span class="rec-badge">Recomendado para ti</span>
+        <input type="radio" name="plan" value="profesional" checked onchange="selectPlan(this)">
+        <div class="card-header-top"><p class="plan-name">Profesional</p><div class="custom-radio"></div></div>
+        <p class="plan-price">$580 <span>USD</span></p>
+        <p class="plan-days">Entrega en 15 días hábiles</p>
+        <ul class="feat-list">
+          <li>Landing + sección de servicios</li>
+          <li class="inc">Google Calendar integrado</li>
+          <li class="inc">WhatsApp automático</li>
+          <li class="inc">Pasarela de pago</li>
+        </ul>
+      </label>
+
+      <label class="plan-card">
+        <input type="radio" name="plan" value="premium" onchange="selectPlan(this)">
+        <div class="card-header-top"><p class="plan-name">Premium</p><div class="custom-radio"></div></div>
+        <p class="plan-price">$950 <span>USD</span></p>
+        <p class="plan-days">Entrega en 21 días hábiles</p>
+        <ul class="feat-list">
+          <li>Todo el plan Profesional</li>
+          <li class="extra">CRM básico integrado</li>
+          <li class="extra">Blog / recursos</li>
+          <li class="extra">SEO avanzado</li>
+        </ul>
+      </label>
+    </div>
+
+    <p class="section-label" style="margin-bottom:12px;">Extras opcionales (Selecciona si deseas agregarlos)</p>
+    <div class="extras-grid reveal">
+      <label class="extra-item">
+        <input type="checkbox" name="extras" value="120" data-name="Identidad visual completa" onchange="toggleExtra(this)">
+        <div class="custom-checkbox"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="extra-info"><p class="extra-name">Identidad visual</p><p class="extra-price">+ $120 USD</p></div>
+      </label>
+      <label class="extra-item">
+        <input type="checkbox" name="extras" value="80" data-name="SEO on-page inicial" onchange="toggleExtra(this)">
+        <div class="custom-checkbox"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="extra-info"><p class="extra-name">SEO Inicial</p><p class="extra-price">+ $80 USD</p></div>
+      </label>
+      <label class="extra-item">
+        <input type="checkbox" name="extras" value="50" data-name="Mantenimiento mensual (1er mes)" onchange="toggleExtra(this)">
+        <div class="custom-checkbox"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="extra-info"><p class="extra-name">Mantenimiento (mes)</p><p class="extra-price">+ $50 USD</p></div>
+      </label>
+    </div>
+
+    <!-- Resumen Dinámico -->
+    <div class="summary-card reveal" id="summary-content"></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CHECKLIST INTEGRADO (Manual + IA) -->
+  <section id="checklist">
+    <p class="section-label">Paso Final</p>
+    <h2 class="section-title reveal">Checklist de inicio (Potenciado por IA)</h2>
+
+    <div class="checklist-wrap reveal">
+      <p class="progress-label" id="prog-label">0 de 10 completados</p>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+
+      <!-- GRUPO 1: MARCA E IDENTIDAD -->
+      <div class="cl-group">
+        <p class="cl-group-title">Marca e identidad</p>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Logo en formato digital</p><p class="cl-sub">Sube tu logo (PNG, JPG o SVG preferiblemente)</p></div>
+          </div>
+          <div class="cl-field"><input type="file" accept="image/*" onchange="checkParent(this)"></div>
+        </div>
+
+        <!-- Maps API Integration -->
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Ubicación del Negocio</p><p class="cl-sub">Conectado a Google Maps Places</p></div>
+          </div>
+          <div class="cl-field">
+            <input type="text" id="autocomplete-maps" name="ubicacion_negocio" placeholder="Empieza a escribir tu dirección..." oninput="checkParent(this)">
+            <input type="hidden" id="ubicacion-latitud" name="ubicacion_latitud">
+            <input type="hidden" id="ubicacion-longitud" name="ubicacion_longitud">
+          </div>
+        </div>
+
+        <!-- YouTube API Integration -->
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Webs de referencia</p><p class="cl-sub">Busca ejemplos de diseño en YouTube</p></div>
+          </div>
+          <div class="cl-field">
+            <input type="text" id="yt-search-input" placeholder="Ej: Mejores diseños web para clínicas 2024">
+            <button type="button" class="btn-yt" onclick="abrirYouTube()">▶ Buscar en YouTube</button>
+            <textarea id="yt-resultado" rows="1" placeholder="URL seleccionada aparecerá aquí..." oninput="checkParent(this)" readonly></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO 2: SERVICIOS Y CONTENIDO -->
+      <div class="cl-group">
+        <p class="cl-group-title">Servicios y contenido</p>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Lista de servicios</p><p class="cl-sub">Nombre y precio (si aplica)</p></div>
+          </div>
+          <div class="cl-field">
+            <textarea id="lista-servicios" rows="3" placeholder="Ej: Asesoría Financiera - 1h ($50). Redacta tus servicios y la IA mejorará el texto." oninput="checkParent(this)"></textarea>
+            <button type="button" class="btn-ia" onclick="mejorarServiciosIA(this)">✨ Mejorar Textos de Venta con IA</button>
+          </div>
+        </div>
+
+        <!-- Gemini API Integration -->
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Perfil profesional corto</p><p class="cl-sub">¿No sabes qué poner? La IA lo redacta por ti.</p></div>
+          </div>
+          <div class="cl-field">
+            <textarea id="perfil-bio" rows="2" placeholder="Escribe tu profesión o industria y deja que la IA redacte tu bio..." oninput="checkParent(this)"></textarea>
+            <button type="button" class="btn-ia" onclick="generarBioIA(this)">✨ Redactar con Gemini AI</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO 3: CONFIGURACIÓN TÉCNICA -->
+      <div class="cl-group">
+        <p class="cl-group-title">Configuración técnica</p>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Correo para Google Calendar</p><p class="cl-sub">Donde quieres recibir tus citas</p></div>
+          </div>
+          <div class="cl-field"><input type="email" placeholder="ejemplo@gmail.com" oninput="checkParent(this)"></div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Número de WhatsApp</p><p class="cl-sub">A dónde llegarán los mensajes</p></div>
+          </div>
+          <div class="cl-field"><input type="tel" placeholder="+56 9 1234 5678" oninput="checkParent(this)"></div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Pasarela de pago (Si aplica)</p><p class="cl-sub">Flow, Stripe o Mercado Pago</p></div>
+          </div>
+          <div class="cl-field">
+            <select onchange="checkParent(this)">
+              <option value="">Selecciona una opción...</option>
+              <option value="flow">Flow.cl</option>
+              <option value="mercadopago">Mercado Pago</option>
+              <option value="stripe">Stripe</option>
+              <option value="ninguna">Aún no tengo / No aplica</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO 4: OBJETIVOS -->
+      <div class="cl-group">
+        <p class="cl-group-title">Objetivos</p>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Público objetivo</p><p class="cl-sub">A quién le habla tu web</p></div>
+          </div>
+          <div class="cl-field"><input type="text" id="obj-publico" placeholder="Ej: Pymes buscando digitalizarse..." oninput="checkParent(this)"></div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Meta principal</p><p class="cl-sub">Qué deseas lograr con la web</p></div>
+          </div>
+          <div class="cl-field"><input type="text" id="obj-meta" placeholder="Ej: Conseguir 10 reuniones al mes" oninput="checkParent(this)"></div>
+        </div>
+
+        <!-- Gemini API Strategy Integration -->
+        <div class="cl-item">
+          <div class="cl-header">
+            <div class="cl-checkbox" onclick="toggleManual(this)"><svg viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="cl-text"><p class="cl-main">Estrategia Web (Sugerida por IA)</p><p class="cl-sub">Recomendaciones basadas en tus objetivos</p></div>
+          </div>
+          <div class="cl-field">
+            <button type="button" class="btn-ia" style="background: linear-gradient(135deg, #10B981, #059669);" onclick="generarEstrategiaIA(this)">💡 Generar Estrategia con IA</button>
+            <textarea id="estrategia-resultado" rows="4" placeholder="Tu estrategia recomendada aparecerá aquí tras analizar tu público y metas..." oninput="checkParent(this)" readonly style="margin-top: 8px; background: var(--gray-100);"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL (CON ENVÍO A n8n o FormSubmit) -->
+  <div class="divider"></div>
+  <div class="cta-section reveal">
+    <h2>¿Todo listo?</h2>
+    <p>Ingresa tu correo para recibir una copia de tu configuración y enviar tu solicitud automáticamente. Nos pondremos a trabajar de inmediato.</p>
+
+    <div style="max-width: 320px; margin: 0 auto 1.5rem;">
+      <input type="email" id="correo-cliente" name="email" placeholder="Tu correo electrónico" required
+        style="width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 15px; margin-bottom: 1rem;">
+    </div>
+
+    <div class="cta-row">
+      <button type="button" class="btn-hero" id="btn-enviar" onclick="enviarFormularioAutomatico()">Enviar Formulario</button>
+      <a class="btn-outline" href="https://wa.me/?text=Hola%2C%20tengo%20dudas%20sobre%20la%20cotizaci%C3%B3n" target="_blank">Tengo dudas por WhatsApp</a>
+    </div>
+
+    <p id="mensaje-estado" style="display: none; margin-top: 15px; font-weight: 500; font-size: 14px;"></p>
+  </div>
+</form>
+
+<footer>
+  <span>Propuesta de Desarrollo Web</span>
+  <span id="footer-summary" style="font-weight: 700; color: var(--teal);">Plan Profesional — $580 USD</span>
+</footer>
+
+<!-- Modal de YouTube -->
+<div id="yt-modal">
+  <div class="yt-content">
+    <div style="display:flex; justify-content:space-between;">
+      <h3 style="font-family:'Syne'">Resultados de YouTube</h3>
+      <button onclick="document.getElementById('yt-modal').style.display='none'" style="cursor:pointer; border:none; background:none; font-size:20px;">✕</button>
+    </div>
+    <div class="yt-results" id="yt-results-container"></div>
+  </div>
+</div>
+
+<!-- CHAT WIDGET INTERACTIVO -->
+<div class="chat-widget">
+  <div class="chat-window" id="chat-window">
+    <div class="chat-header">
+      <span>Asistente WebPro</span>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-body" id="chat-body">
+      <div class="chat-msg bot">¡Hola! Soy tu asistente de IA. ¿Tienes dudas sobre nuestros planes o necesitas ayuda para empezar tu proyecto?</div>
+      <div class="typing-indicator" id="chat-typing">El asistente está pensando...</div>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" placeholder="Pregúntame algo..." onkeypress="if(event.key === 'Enter') enviarMensajeChat()">
+      <button onclick="enviarMensajeChat()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+  <button class="chat-btn" onclick="toggleChat()">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+  </button>
+</div>
+
+<script>
+  // ==========================================
+  // CONFIGURACIÓN GLOBAL Y APIS
+  // ==========================================
+  const apiKey = ""; // El entorno inyecta la clave de Gemini aquí automáticamente
+  const YOUTUBE_API_KEY = "TU_API_KEY_YOUTUBE"; // Para uso real, coloca tu clave aquí
+  const EMAIL_ADMINISTRACION = "cranpihi@gmail.com";
+
+  // ==========================================
+  // LÓGICA DE LA PLANTILLA: NAVEGACIÓN Y PLANES
+  // ==========================================
+  function activateStep(stepNumber) {
+    document.querySelectorAll('.p-step').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.p-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('nav-' + stepNumber).classList.add('active');
+    document.getElementById('content-' + stepNumber).classList.add('active');
+  }
+
+  const datosPlanes = {
+    'esencial': { nombre: 'Esencial', precio: 320, desglose: [ { lbl: 'Desarrollo web + diseño', val: '$320 USD' } ] },
+    'profesional': { nombre: 'Profesional', precio: 580, desglose: [ { lbl: 'Desarrollo web + diseño', val: '$480 USD' }, { lbl: 'Integración Calendar', val: '$40 USD' }, { lbl: 'WhatsApp automático', val: '$30 USD' }, { lbl: 'Integración de Pagos', val: '$30 USD' } ] },
+    'premium': { nombre: 'Premium', precio: 950, desglose: [ { lbl: 'Plan Profesional completo', val: '$580 USD' }, { lbl: 'CRM Básico', val: '$120 USD' }, { lbl: 'Blog y recursos', val: '$150 USD' }, { lbl: 'SEO Avanzado', val: '$100 USD' } ] }
+  };
+
+  function selectPlan(radio) {
+    document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
+    radio.closest('.plan-card').classList.add('selected');
+    actualizarResumen();
+  }
+
+  function toggleExtra(checkbox) {
+    const item = checkbox.closest('.extra-item');
+    if (checkbox.checked) { item.classList.add('selected'); } else { item.classList.remove('selected'); }
+    actualizarResumen();
+  }
+
+  function actualizarResumen() {
+    const planSeleccionado = document.querySelector('input[name="plan"]:checked');
+    if (!planSeleccionado) return;
+
+    const data = datosPlanes[planSeleccionado.value];
+    let total = data.precio;
+
+    let html = `<p class="section-label" style="margin-bottom:10px;">Resumen — Plan ${data.nombre}</p>`;
+    data.desglose.forEach(item => { html += `<div class="summary-row"><span class="lbl">${item.lbl}</span><span class="val">${item.val}</span></div>`; });
+
+    const extras = document.querySelectorAll('input[name="extras"]:checked');
+    if (extras.length > 0) {
+      extras.forEach(extra => {
+        const precioExtra = parseInt(extra.value);
+        total += precioExtra;
+        html += `<div class="summary-row"><span class="lbl">+ ${extra.dataset.name}</span><span class="val">$${precioExtra} USD</span></div>`;
+      });
+    }
+
+    html += `<div class="summary-row total" style="margin-top: 10px; border-top: 1.5px solid var(--border);"><span class="lbl">Total Inversión</span><span class="val">$${total} USD</span></div>`;
+    document.getElementById('summary-content').innerHTML = html;
+    document.getElementById('footer-summary').innerText = `Plan ${data.nombre} — $${total} USD`;
+  }
+
+  // ==========================================
+  // LÓGICA DE LA PLANTILLA: CHECKLIST Y PROGRESO
+  // ==========================================
+  function checkParent(input) {
+    const item = input.closest('.cl-item');
+    const cb = item.querySelector('.cl-checkbox');
+    let hasValue = false;
+
+    if (input.type === 'file') { hasValue = input.files.length > 0; }
+    else { hasValue = input.value.trim() !== ''; }
+
+    if (hasValue) { cb.classList.add('checked'); item.classList.add('completed'); }
+    else { cb.classList.remove('checked'); item.classList.remove('completed'); }
+    updateProgress();
+  }
+
+  function toggleManual(cb) {
+    const item = cb.closest('.cl-item');
+    cb.classList.toggle('checked');
+    item.classList.toggle('completed');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const total = document.querySelectorAll('.cl-item').length;
+    const done = document.querySelectorAll('.cl-checkbox.checked').length;
+    document.getElementById('prog-label').textContent = done + ' de ' + total + ' completados';
+    document.getElementById('prog-fill').style.width = Math.round((done / total) * 100) + '%';
+  }
+
+  // ==========================================
+  // IA: GENERACIÓN DE TEXTO CON GEMINI
+  // ==========================================
+  async function generarBioIA(btn) {
+    const input = document.getElementById('perfil-bio');
+    const contexto = input.value.trim() || "un consultor independiente";
+
+    btn.innerHTML = "⏳ Pensando...";
+    btn.disabled = true;
+
+    try {
+      const url = '/api/ai';
+      const prompt = `Actúa como un experto en copywriting para páginas web. Escribe una biografía profesional corta (máximo 2 oraciones) orientada a vender confianza, basándote en esta información: ${contexto}. No uses comillas.`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: "Eres un redactor persuasivo y directo." }] }
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content) {
+        input.value = data.candidates[0].content.parts[0].text.trim();
+        checkParent(input);
+      } else {
+        alert("La IA no pudo generar el texto. Intenta de nuevo.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión con la IA de Google Gemini.");
+    } finally {
+      btn.innerHTML = "✨ Redactar con Gemini AI";
+      btn.disabled = false;
+    }
+  }
+
+  async function mejorarServiciosIA(btn) {
+    const input = document.getElementById('lista-servicios');
+    const contexto = input.value.trim();
+
+    if(!contexto) {
+      alert("Primero escribe algunos servicios de forma sencilla para que la IA pueda mejorarlos.");
+      return;
+    }
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⏳ Optimizando textos...";
+    btn.disabled = true;
+
+    try {
+      const url = '/api/ai';
+      const prompt = `Actúa como un experto copywriter comercial. Toma la siguiente lista de servicios y mejórala para que suene más persuasiva, profesional y orientada a la conversión. Mantén un formato de lista claro.\nServicios originales: \n${contexto}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: "Eres un redactor de ventas persuasivo. Responde únicamente con la lista de servicios mejorada." }] }
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content) {
+        input.value = data.candidates[0].content.parts[0].text.trim();
+        checkParent(input);
+      } else {
+        alert("La IA no pudo procesar los textos.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión con Gemini AI.");
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  async function generarEstrategiaIA(btn) {
+    const publico = document.getElementById('obj-publico').value.trim();
+    const meta = document.getElementById('obj-meta').value.trim();
+    const resultado = document.getElementById('estrategia-resultado');
+
+    if(!publico || !meta) {
+      alert("Por favor, llena primero tu 'Público objetivo' y 'Meta principal' para generar una estrategia precisa.");
+      return;
+    }
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⏳ Analizando estrategia...";
+    btn.disabled = true;
+
+    try {
+      const url = '/api/ai';
+      const prompt = `Actúa como un consultor de negocios digitales. Un cliente quiere una página web. \nSu público objetivo es: "${publico}". \nSu meta principal es: "${meta}". \nEscribe 3 recomendaciones puntuales y breves sobre qué secciones, botones o elementos clave debe tener su web para lograr esta meta. Usa viñetas.`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: "Eres un consultor experto. Sé directo, estratégico y muy breve." }] }
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content) {
+        resultado.value = data.candidates[0].content.parts[0].text.trim();
+        checkParent(resultado);
+      } else {
+        alert("La IA no pudo procesar la estrategia.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión con Gemini AI.");
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  // ==========================================
+  // API: GOOGLE MAPS AUTOCOMPLETE
+  // ==========================================
+  function initMapsAutocomplete() {
+    try {
+      const input = document.getElementById('autocomplete-maps');
+      if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+          fields: ['formatted_address', 'geometry', 'name']
+        });
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          const location = place.geometry && place.geometry.location;
+
+          if (!location) {
+            document.getElementById('ubicacion-latitud').value = '';
+            document.getElementById('ubicacion-longitud').value = '';
+            checkParent(input);
+            return;
+          }
+
+          input.value = place.formatted_address || place.name || input.value;
+          document.getElementById('ubicacion-latitud').value = location.lat();
+          document.getElementById('ubicacion-longitud').value = location.lng();
+          checkParent(input);
+        });
+      }
+    } catch (e) {
+      console.log("Maps API no cargada por falta de API Key válida.");
+    }
+  }
+  window.addEventListener('load', initMapsAutocomplete);
+
+  // ==========================================
+  // API: YOUTUBE BÚSQUEDA
+  // ==========================================
+  function abrirYouTube() {
+    const query = document.getElementById('yt-search-input').value || "landing page design";
+    const modal = document.getElementById('yt-modal');
+    const container = document.getElementById('yt-results-container');
+
+    modal.style.display = "flex";
+    container.innerHTML = "<p>Buscando videos...</p>";
+
+    setTimeout(() => {
+      container.innerHTML = `
+        <div class="yt-item" onclick="seleccionarVideo('https://youtube.com/watch?v=Ejemplo1')">
+          <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&q=80" alt="thumb">
+          <div class="yt-info">
+            <h4>Inspiración Web: ${query}</h4>
+            <p style="font-size:12px; color:gray;">Canal: WebDesign Pro</p>
+          </div>
+        </div>
+        <div class="yt-item" onclick="seleccionarVideo('https://youtube.com/watch?v=Ejemplo2')">
+          <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200&q=80" alt="thumb">
+          <div class="yt-info">
+            <h4>Análisis de Landing Pages exitosas</h4>
+            <p style="font-size:12px; color:gray;">Canal: Marketing Tech</p>
+          </div>
+        </div>
+      `;
+    }, 800);
+  }
+
+  function seleccionarVideo(url) {
+    const inputRes = document.getElementById('yt-resultado');
+    inputRes.value = url;
+    document.getElementById('yt-modal').style.display = "none";
+    checkParent(inputRes);
+  }
+
+  // ==========================================
+  // IA: CHATBOT ASISTENTE CON GEMINI API
+  // ==========================================
+  let chatHistory = [];
+
+  function toggleChat() {
+    const win = document.getElementById('chat-window');
+    win.classList.toggle('active');
+  }
+
+  async function enviarMensajeChat() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendChatMessage(text, 'user');
+    input.value = '';
+
+    const typing = document.getElementById('chat-typing');
+    const chatBody = document.getElementById('chat-body');
+    typing.style.display = 'block';
+    chatBody.appendChild(typing);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    chatHistory.push({ role: "user", parts: [{ text: text }] });
+
+    try {
+      const url = '/api/ai';
+      const systemInstruction = {
+        parts: [{ text: "Eres un asistente de ventas amigable y experto para la agencia 'WebPro'. Tu objetivo es ayudar a los visitantes a entender las diferencias entre los planes (Esencial, Profesional, Premium) y motivarlos a completar el formulario de cotización y el checklist. Responde de forma breve (máximo 2-3 oraciones), persuasiva y clara." }]
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: chatHistory, systemInstruction: systemInstruction })
+      });
+
+      const data = await response.json();
+      typing.style.display = 'none';
+
+      if (data.candidates && data.candidates[0].content) {
+        const botResponse = data.candidates[0].content.parts[0].text;
+        appendChatMessage(botResponse, 'bot');
+        chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
+      } else {
+        appendChatMessage("Hubo un error al procesar tu mensaje. Intenta nuevamente.", 'bot');
+      }
+    } catch (error) {
+      console.error(error);
+      typing.style.display = 'none';
+      appendChatMessage("Ups, parece que perdí la conexión. Intenta de nuevo en unos segundos.", 'bot');
+    }
+  }
+
+  function appendChatMessage(text, sender) {
+    const chatBody = document.getElementById('chat-body');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${sender}`;
+    msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+
+    const typing = document.getElementById('chat-typing');
+    chatBody.insertBefore(msgDiv, typing);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  // ==========================================
+  // ENVÍO DE DATOS AUTOMÁTICO (WEBHOOK)
+  // ==========================================
+  function enviarFormularioAutomatico() {
+    const correoCliente = document.getElementById('correo-cliente').value;
+    const btnEnviar = document.getElementById('btn-enviar');
+    const mensajeEstado = document.getElementById('mensaje-estado');
+
+    if (!correoCliente || !correoCliente.includes('@')) {
+      alert("Por favor, ingresa un correo electrónico válido antes de continuar.");
+      return;
+    }
+
+    const planSeleccionado = document.querySelector('input[name="plan"]:checked');
+    if (!planSeleccionado) {
+      alert("Por favor, selecciona un plan en la sección de Inversión.");
+      return;
+    }
+
+    btnEnviar.innerText = "Enviando...";
+    btnEnviar.disabled = true;
+    btnEnviar.style.opacity = "0.7";
+
+    const dataPlan = datosPlanes[planSeleccionado.value];
+    let totalInversion = dataPlan.precio;
+    let detallesExtras = [];
+
+    document.querySelectorAll('input[name="extras"]:checked').forEach(extra => {
+      detallesExtras.push(`${extra.dataset.name}: $${extra.value} USD`);
+      totalInversion += parseInt(extra.value);
+    });
+
+    let detallesChecklist = [];
+    let checklist = [];
+    document.querySelectorAll('.cl-item').forEach(item => {
+      const pregunta = item.querySelector('.cl-main').innerText;
+      const input = item.querySelector('input, textarea, select');
+      let respuesta = 'No respondido';
+
+      if (input) {
+        if (input.type === 'file') {
+          respuesta = input.files.length > 0 ? 'Archivo adjuntado' : 'Sin archivo';
+        } else {
+          respuesta = input.value || 'No respondido';
+        }
+      }
+      checklist.push({
+        question: pregunta,
+        answer: respuesta,
+        completed: item.classList.contains('completed')
+      });
+      detallesChecklist.push(`${pregunta}: ${respuesta}`);
+    });
+
+    const extras = [...document.querySelectorAll('input[name="extras"]:checked')].map(extra => ({
+      name: extra.dataset.name,
+      price: Number(extra.value)
+    }));
+
+    let contenidoMensaje = `Nueva solicitud de Propuesta Web\n\n`;
+    contenidoMensaje += `Correo del cliente: ${correoCliente}\n`;
+    contenidoMensaje += `-----------------------------------\n`;
+    contenidoMensaje += `INVERSIÓN:\n`;
+    contenidoMensaje += `Plan: ${dataPlan.nombre} ($${dataPlan.precio} USD)\n`;
+    contenidoMensaje += `Extras: ${detallesExtras.length > 0 ? detallesExtras.join(', ') : 'Ninguno'}\n`;
+    contenidoMensaje += `TOTAL: $${totalInversion} USD\n\n`;
+    contenidoMensaje += `-----------------------------------\n`;
+    contenidoMensaje += `CHECKLIST:\n`;
+    contenidoMensaje += detallesChecklist.join('\n');
+
+    const ubicacion = {
+      address: document.getElementById('autocomplete-maps')?.value || '',
+      latitude: document.getElementById('ubicacion-latitud')?.value || '',
+      longitude: document.getElementById('ubicacion-longitud')?.value || ''
+    };
+
+    fetch('/api/leads', {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: correoCliente,
+        plan: dataPlan.nombre,
+        total: totalInversion,
+        message: contenidoMensaje,
+        location: ubicacion,
+        extras,
+        checklist
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      mensajeEstado.style.display = "block";
+      mensajeEstado.style.color = "var(--teal)";
+      mensajeEstado.innerText = "¡Enviado con éxito! Revisa tu correo en unos minutos.";
+      btnEnviar.innerText = "Formulario Enviado";
+    })
+    .catch(error => {
+      mensajeEstado.style.display = "block";
+      mensajeEstado.style.color = "var(--coral)";
+      mensajeEstado.innerText = "Hubo un error al enviar. Por favor, intenta nuevamente.";
+      btnEnviar.innerText = "Enviar Formulario";
+      btnEnviar.disabled = false;
+      btnEnviar.style.opacity = "1";
+    });
+  }
+
+  // Inicialización de la vista
+  window.onload = function() {
+    actualizarResumen();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+    // Intersection Observer para las animaciones reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  };
+</script>
+</body>
+</html>

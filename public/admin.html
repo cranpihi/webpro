@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebPro CRM</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #12343b; background: #fff9f5; }
+    body { margin: 0; } main { max-width: 1100px; margin: auto; padding: 32px 20px; }
+    .panel { background: #fff; border: 1px solid #eadfd9; border-radius: 12px; padding: 24px; box-shadow: 0 12px 30px #12343b12; }
+    h1 { margin-top: 0; } input, button, select { font: inherit; padding: 10px 12px; border-radius: 8px; border: 1px solid #d9cbc3; }
+    button { background: #c84c3a; color: #fff; border: 0; cursor: pointer; font-weight: 700; } button:hover { background: #a93e30; }
+    .login { max-width: 360px; margin: 12vh auto; } .login form { display: flex; gap: 8px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .table-wrap { overflow-x: auto; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 13px 10px; border-bottom: 1px solid #eee5df; vertical-align: top; }
+    th { color: #6d625c; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; } .muted { color: #6d625c; font-size: 13px; }
+    .error { color: #a44a36; min-height: 22px; } .empty { padding: 30px; text-align: center; color: #6d625c; }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="login-view" class="panel login">
+      <h1>WebPro CRM</h1><p class="muted">Acceso privado para administrar solicitudes.</p>
+      <form id="login-form"><input id="password" type="password" placeholder="Contraseña" required><button>Entrar</button></form>
+      <p id="login-error" class="error"></p>
+    </section>
+    <section id="app-view" class="panel" hidden>
+      <div class="toolbar"><div><h1>Solicitudes</h1><p id="counter" class="muted"></p></div><button id="logout">Cerrar sesión</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Plan</th><th>Total</th><th>Ubicación</th><th>Estado</th></tr></thead><tbody id="leads"></tbody></table></div>
+    </section>
+  </main>
+  <script>
+    const tokenKey = 'webpro-admin-token';
+    const loginView = document.getElementById('login-view');
+    const appView = document.getElementById('app-view');
+    const leadsBody = document.getElementById('leads');
+    const statusOptions = ['nuevo', 'contactado', 'en_proceso', 'cerrado'];
+
+    function authHeaders() { return { Authorization: `Bearer ${localStorage.getItem(tokenKey)}` }; }
+    function showApp() { loginView.hidden = true; appView.hidden = false; loadLeads(); }
+    async function loadLeads() {
+      const response = await fetch('/api/admin/leads', { headers: authHeaders() });
+      if (!response.ok) { localStorage.removeItem(tokenKey); location.reload(); return; }
+      const leads = await response.json();
+      document.getElementById('counter').textContent = `${leads.length} solicitudes recibidas`;
+      leadsBody.innerHTML = leads.length ? leads.map(lead => `<tr>
+        <td>${new Date(lead.createdAt).toLocaleString('es-CL')}</td>
+        <td><strong>${escapeHtml(lead.email)}</strong><div class="muted">${escapeHtml(lead.id)}</div></td>
+        <td>${escapeHtml(lead.plan)}</td><td>$${lead.total} USD</td>
+        <td>${escapeHtml(lead.location?.address || 'No indicada')}</td>
+        <td><select data-id="${lead.id}">${statusOptions.map(status => `<option ${status === lead.status ? 'selected' : ''}>${status}</option>`).join('')}</select></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty">Todavía no hay solicitudes.</td></tr>';
+      leadsBody.querySelectorAll('select').forEach(select => select.addEventListener('change', updateStatus));
+    }
+    async function updateStatus(event) { await fetch(`/api/admin/leads/${event.target.dataset.id}`, { method: 'PATCH', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ status: event.target.value }) }); }
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char])); }
+    document.getElementById('login-form').addEventListener('submit', async event => { event.preventDefault(); const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('password').value }) }); if (!response.ok) { document.getElementById('login-error').textContent = 'Contraseña incorrecta.'; return; } const data = await response.json(); localStorage.setItem(tokenKey, data.token); showApp(); });
+    document.getElementById('logout').addEventListener('click', () => { localStorage.removeItem(tokenKey); location.reload(); });
+    if (localStorage.getItem(tokenKey)) showApp();
+  </script>
+</body>
+</html>
